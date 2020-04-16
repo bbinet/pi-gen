@@ -77,26 +77,18 @@ fi
 # Modify original build-options to allow config file to be mounted in the docker container
 BUILD_OPTS="$(echo "${BUILD_OPTS:-}" | sed -E 's@\-c\s?([^ ]+)@-c /config@')"
 
-${DOCKER} build -t pi-gen "${DIR}"
+PIGEN_EXISTS=$(${DOCKER} ps -a --filter name="pi-gen" -q)
+if [ "${PIGEN_EXISTS}" == "" ]; then
+	${DOCKER} build -t pi-gen "${DIR}"
+fi
 if [ "${CONTAINER_EXISTS}" != "" ]; then
-	trap 'echo "got CTRL+C... please wait 5s" && ${DOCKER} stop -t 5 ${CONTAINER_NAME}_cont' SIGINT SIGTERM
-	time ${DOCKER} run --rm --privileged \
-		--volume "${CONFIG_FILE}":/config:ro \
-		--volume "${DIR}/work":/pi-gen/work \
-		--volume "${DIR}/deploy":/pi-gen/deploy \
-		-e "GIT_HASH=${GIT_HASH}" \
-		--volumes-from="${CONTAINER_NAME}" --name "${CONTAINER_NAME}_cont" \
-		pi-gen \
-		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static &&
-	cd /pi-gen; ./build.sh ${BUILD_OPTS} &&
-	rsync -av work/*/build.log deploy/" &
-	wait "$!"
+	#${DOCKER} rm -v "${CONTAINER_NAME}"
+	${DOCKER} start "${CONTAINER_NAME}"
 else
 	trap 'echo "got CTRL+C... please wait 5s" && ${DOCKER} stop -t 5 ${CONTAINER_NAME}' SIGINT SIGTERM
 	time ${DOCKER} run --name "${CONTAINER_NAME}" --privileged \
 		--volume "${CONFIG_FILE}":/config:ro \
-		--volume "${DIR}/work":/pi-gen/work \
-		--volume "${DIR}/deploy":/pi-gen/deploy \
+		--volume "${DIR}":/pi-gen \
 		-e "GIT_HASH=${GIT_HASH}" \
 		pi-gen \
 		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static &&

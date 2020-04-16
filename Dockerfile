@@ -11,6 +11,8 @@ RUN dpkg --add-architecture i386 && \
         binfmt-support ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . /pi-gen/
+#COPY . /pi-gen/
 
-VOLUME [ "/pi-gen/work", "/pi-gen/deploy"]
+#VOLUME [ "/pi-gen/work", "/pi-gen/deploy"]
+
+VOLUME /pi-gen
