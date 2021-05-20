@@ -143,6 +143,11 @@ do
 	esac
 done
 
+export USE_LTSP=${USE_LTSP:-0}
+export LTSP_IMAGE=${LTSP_IMAGE:-raspbian}
+export LTSP_BASEDIR=${LTSP_BASEDIR:-/srv/ltsp}
+export LTSP_TFTPDIR=${LTSP_TFTPDIR:-/srv/tftp}
+
 export PI_GEN=${PI_GEN:-pi-gen}
 export PI_GEN_REPO=${PI_GEN_REPO:-https://github.com/RPi-Distro/pi-gen}
 
@@ -238,7 +243,11 @@ done
 
 CLEAN=1
 for EXPORT_DIR in ${EXPORT_DIRS}; do
-	STAGE_DIR=${BASE_DIR}/export-image
+	if [ "${USE_LTSP}" == "1" ]; then
+		STAGE_DIR=${BASE_DIR}/ltsp-image
+	else
+		STAGE_DIR=${BASE_DIR}/export-image
+	fi
 	# shellcheck source=/dev/null
 	source "${EXPORT_DIR}/EXPORT_IMAGE"
 	EXPORT_ROOTFS_DIR=${WORK_DIR}/$(basename "${EXPORT_DIR}")/rootfs

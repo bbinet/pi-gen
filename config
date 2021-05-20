@@ -1,0 +1,26 @@
+IMG_NAME=RaspbianEbenEzer
+HOSTNAME=ebenezer
+LOCALE_DEFAULT="fr_FR.UTF-8"
+KEYBOARD_KEYMAP=fr
+KEYBOARD_LAYOUT="French (FR)"
+FIRST_USER_NAME=bruno
+FIRST_USER_PASS=bruno
+ENABLE_SSH=1
+
+# run apt-cacher-ng using: docker-compose up -d
+APT_PROXY=http://172.17.0.1:3142
+
+STAGE_LIST="stage0 stage1 stage2 stage3 stageEE0"
+#STAGE_LIST="stage2 stage3 stageEE0"
+
+IMG_DATE=2020-04-23
+CONTINUE=1
+PRESERVE_CONTAINER=1
+DEPLOY_ZIP=0
+
+CLEAN=1
+
+USE_LTSP=1
+LTSP_BASEDIR=/resin-data/data/srv/ltsp
+LTSP_TFTPDIR=/resin-data/data/srv/tftp
+LTSP_IMAGE=rpi-test
