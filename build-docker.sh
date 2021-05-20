@@ -1,7 +1,5 @@
 #!/bin/bash -eu
 
-set -x
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 BUILD_OPTS="$*"
@@ -77,22 +75,28 @@ fi
 # Modify original build-options to allow config file to be mounted in the docker container
 BUILD_OPTS="$(echo "${BUILD_OPTS:-}" | sed -E 's@\-c\s?([^ ]+)@-c /config@')"
 
-PIGEN_EXISTS=$(${DOCKER} ps -a --filter name="pi-gen" -q)
+PIGEN_EXISTS=$(${DOCKER} images pi-gen -q)
 if [ "${PIGEN_EXISTS}" == "" ]; then
+	echo "Building pi-gen image"
 	${DOCKER} build -t pi-gen "${DIR}"
 fi
 if [ "${CONTAINER_EXISTS}" != "" ]; then
 	#${DOCKER} rm -v "${CONTAINER_NAME}"
 	${DOCKER} start "${CONTAINER_NAME}"
+	${DOCKER} logs -f "${CONTAINER_NAME}"
 else
 	trap 'echo "got CTRL+C... please wait 5s" && ${DOCKER} stop -t 5 ${CONTAINER_NAME}' SIGINT SIGTERM
+	volumes=" --volume ${CONFIG_FILE}:/config:ro"
+	volumes="$volumes --volume ${DIR}:${DIR}"
+	if [ "${LTSP_BASEDIR}" != "" ]; then
+		volumes="$volumes --volume ${LTSP_BASEDIR}:${LTSP_BASEDIR}"
+	fi
 	time ${DOCKER} run --name "${CONTAINER_NAME}" --privileged \
-		--volume "${CONFIG_FILE}":/config:ro \
-		--volume "${DIR}":/pi-gen \
+		$volumes \
 		-e "GIT_HASH=${GIT_HASH}" \
 		pi-gen \
 		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static &&
-	cd /pi-gen; ./build.sh ${BUILD_OPTS} &&
+	cd ${DIR}; ./build.sh ${BUILD_OPTS} &&
 	rsync -av work/*/build.log deploy/" &
 	wait "$!"
 fi
