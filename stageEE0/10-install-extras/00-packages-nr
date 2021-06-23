@@ -1,0 +1,22 @@
+raspberrypi-net-mods
+raspberrypi-ui-mods
+fonts-piboto
+pipanel
+lxinput
+raspberrypi-artwork
+pi-greeter
+rpd-plym-splash
+#rpd-wallpaper
+pishutdown
+scrot
+gtk2-engines-clearlookspix
+gtk2-engines-pixbuf
+gtk2-engines-pixflat
+pixflat-icons
+bluealsa
+lxplug-volume
+#lxplug-network # this is useless in ltsp where network is already setup and it also includes rc-gui which must be removed
+lxplug-bluetooth
+lxplug-ejecter
+lxplug-ptbatt
+lxplug-cputemp
