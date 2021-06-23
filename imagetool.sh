@@ -42,7 +42,11 @@ nbd_cleanup() {
 			if [ ! -z "${d}" ]; then
 				QDEV="$(ps xa | grep $d | grep -v grep)"
 				if [ -z "${QDEV}" ]; then
-					kpartx -d /dev/$d && echo "Unconnected device map removed: /dev/$d"
+					if [ -e "/dev/$d" ] ; then
+						kpartx -d /dev/$d && echo "Unconnected device map removed: /dev/$d"
+					elif [ -e "/mnt/root/dev/$d" ] ; then
+						kpartx -d /mnt/root/dev/$d && echo "Unconnected device map removed: /mnt/root/dev/$d"
+					fi
 				fi
 			fi
 		done
@@ -102,10 +106,17 @@ if [ "${UMOUNT}" = "1" ] && [ -z "${MOUNTPOINT}" ]; then
 	exit
 fi
 
-export NBD_DEV="${NBD_DEV:-/dev/nbd1}"
-export MAP_BOOT_DEV=/dev/mapper/nbd1p1
-export MAP_ROOT_DEV=/dev/mapper/nbd1p2
-source scripts/qcow2_handling
+if [ -e "/dev/nbd1" ] ; then
+	export NBD_DEV="${NBD_DEV:-/dev/nbd1}"
+	export MAP_BOOT_DEV=/dev/mapper/nbd1p1
+	export MAP_ROOT_DEV=/dev/mapper/nbd1p2
+	source scripts/qcow2_handling
+elif [ -e "/mnt/root/dev/nbd1" ] ; then
+	export NBD_DEV="${NBD_DEV:-/mnt/root/dev/nbd1}"
+	export MAP_BOOT_DEV=/dev/mapper/nbd1p1
+	export MAP_ROOT_DEV=/dev/mapper/nbd1p2
+	source scripts/qcow2_handling
+fi
 
 if [ "${MOUNT}" = "1" ]; then
 	mount_qimage "${IMAGE}" "${MOUNTPOINT}"

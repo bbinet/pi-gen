@@ -21,10 +21,17 @@ init_nbd() {
 	for x in /sys/class/block/nbd* ; do
 		S=`cat $x/size`
 		if [ "$S" == "0" ] ; then
-			NBD_DEV=/dev/$(basename $x)
-			MAP_BOOT_DEV=/dev/mapper/$(basename $x)p1
-			MAP_ROOT_DEV=/dev/mapper/$(basename $x)p2
-			break
+			if [ -e "/dev/$(basename $x)" ] ; then
+				NBD_DEV=/dev/$(basename $x)
+				MAP_BOOT_DEV=/dev/mapper/$(basename $x)p1
+				MAP_ROOT_DEV=/dev/mapper/$(basename $x)p2
+				break
+			elif [ -e "/mnt/root/dev/$(basename $x)" ] ; then
+				NBD_DEV=/mnt/root/dev/$(basename $x)
+				MAP_BOOT_DEV=/dev/mapper/$(basename $x)p1
+				MAP_ROOT_DEV=/dev/mapper/$(basename $x)p2
+				break
+			fi
 		fi
 	done
 	fi
