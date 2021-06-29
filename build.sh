@@ -184,6 +184,11 @@ term() {
 
 trap term EXIT INT TERM
 
+export USE_LTSP=${USE_LTSP:-0}
+export LTSP_IMAGE=${LTSP_IMAGE:-raspbian}
+export LTSP_BASEDIR=${LTSP_BASEDIR:-/srv/ltsp}
+export LTSP_TFTPDIR=${LTSP_TFTPDIR:-/srv/tftp}
+
 export PI_GEN=${PI_GEN:-pi-gen}
 export PI_GEN_REPO=${PI_GEN_REPO:-https://github.com/RPi-Distro/pi-gen}
 

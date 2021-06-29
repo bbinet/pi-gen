@@ -2,6 +2,10 @@
 
 IMG_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.img"
 INFO_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.info"
+if [ "${USE_LTSP}" == "1" ]; then
+	IMG_FILE="${STAGE_WORK_DIR}/ltsp-${IMG_FILENAME}${IMG_SUFFIX}.img"
+	INFO_FILE="${STAGE_WORK_DIR}/ltsp-${IMG_FILENAME}${IMG_SUFFIX}.info"
+fi
 
 on_chroot << EOF
 if [ -x /etc/init.d/fake-hwclock ]; then
@@ -91,8 +95,17 @@ if [ "${USE_QCOW2}" = "0" ] && [ "${NO_PRERUN_QCOW2}" = "0" ]; then
 
 	unmount_image "${IMG_FILE}"
 else
-	unload_qimage
-	make_bootable_image "${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.qcow2" "$IMG_FILE"
+	if [ "${USE_LTSP}" == "1" ]; then
+		mkdir -p "${LTSP_BASEDIR}"
+		rm -f "${LTSP_BASEDIR}/${LTSP_IMAGE}"
+		ln -s "${ROOTFS_DIR}" "${LTSP_BASEDIR}/${LTSP_IMAGE}"
+		ltsp -b "${LTSP_BASEDIR}" -t "${LTSP_TFTPDIR}" image "${LTSP_IMAGE}" --mksquashfs-params='-comp lzo'
+		rm -f "${LTSP_BASEDIR}/${LTSP_IMAGE}"
+		unload_qimage
+	else
+		unload_qimage
+		make_bootable_image "${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.qcow2" "$IMG_FILE"
+	fi
 fi
 
 if [ "${DEPLOY_ZIP}" == "1" ]; then
@@ -101,5 +114,11 @@ if [ "${DEPLOY_ZIP}" == "1" ]; then
 		"$(basename "${IMG_FILE}")"
 	popd > /dev/null
 else
-	mv "$IMG_FILE" "$DEPLOY_DIR/"
+	if [ "${USE_LTSP}" == "1" ]; then
+		ltsp_img_pth="${LTSP_BASEDIR}/images/${LTSP_IMAGE}.img"
+		rm -f "${IMG_FILE}" && ln -s "$ltsp_img_pth" "$IMG_FILE"
+		rm -f "$DEPLOY_DIR/${LTSP_IMAGE}.img" && ln -s "$ltsp_img_pth" "$DEPLOY_DIR/${LTSP_IMAGE}.img"
+	else
+		mv "$IMG_FILE" "$DEPLOY_DIR/"
+	fi
 fi
