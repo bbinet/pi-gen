@@ -184,7 +184,11 @@ term() {
 
 trap term EXIT INT TERM
 
+export EXPORT_CHROOT=${EXPORT_CHROOT:-0}
+export CHROOT_BASEDIR=${CHROOT_BASEDIR:-/srv/chroots}
+export CHROOT_NAME=${CHROOT_NAME:-my_chroot}
 export USE_LTSP=${USE_LTSP:-0}
+export EXPORT_LTSP_IMAGE=${EXPORT_LTSP_IMAGE:-0}
 export LTSP_IMAGE=${LTSP_IMAGE:-raspbian}
 export LTSP_BASEDIR=${LTSP_BASEDIR:-/srv/ltsp}
 export LTSP_TFTPDIR=${LTSP_TFTPDIR:-/srv/tftp}

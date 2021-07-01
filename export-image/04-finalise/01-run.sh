@@ -2,9 +2,12 @@
 
 IMG_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.img"
 INFO_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.info"
-if [ "${USE_LTSP}" == "1" ]; then
+if [ "${EXPORT_LTSP_IMAGE}" = "1" ]; then
 	IMG_FILE="${STAGE_WORK_DIR}/ltsp-${IMG_FILENAME}${IMG_SUFFIX}.img"
 	INFO_FILE="${STAGE_WORK_DIR}/ltsp-${IMG_FILENAME}${IMG_SUFFIX}.info"
+elif [ "${EXPORT_CHROOT}" = "1" ]; then
+	IMG_FILE="${STAGE_WORK_DIR}/chroot-${IMG_FILENAME}${IMG_SUFFIX}.chroot"
+	INFO_FILE="${STAGE_WORK_DIR}/chroot-${IMG_FILENAME}${IMG_SUFFIX}.info"
 fi
 
 on_chroot << EOF
@@ -95,14 +98,21 @@ if [ "${USE_QCOW2}" = "0" ] && [ "${NO_PRERUN_QCOW2}" = "0" ]; then
 
 	unmount_image "${IMG_FILE}"
 else
-	if [ "${USE_LTSP}" == "1" ]; then
+	if [ "${EXPORT_LTSP_IMAGE}" = "1" ]; then
+		echo ">>> exporting to ltsp image"
 		mkdir -p "${LTSP_BASEDIR}"
 		rm -f "${LTSP_BASEDIR}/${LTSP_IMAGE}"
 		ln -s "${ROOTFS_DIR}" "${LTSP_BASEDIR}/${LTSP_IMAGE}"
 		ltsp -b "${LTSP_BASEDIR}" -t "${LTSP_TFTPDIR}" image "${LTSP_IMAGE}" --mksquashfs-params='-comp lzo'
 		rm -f "${LTSP_BASEDIR}/${LTSP_IMAGE}"
 		unload_qimage
+	elif [ "${EXPORT_CHROOT}" = "1" ]; then
+		echo ">>> exporting to chroot"
+		mkdir -p ${CHROOT_BASEDIR}/${CHROOT_NAME}
+		rsync -aAX --del --delete --info=progress2 ${ROOTFS_DIR}/ ${CHROOT_BASEDIR}/${CHROOT_NAME}/ --exclude={/dev/*,/proc/*,/sys/*,/tmp/*,/run/*,/mnt/*,/media/*,/lost+found,/var/tmp/*,/var/cache/*,/usr/tmp/*}
+		unload_qimage
 	else
+		echo ">>> exporting to disk img"
 		unload_qimage
 		make_bootable_image "${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.qcow2" "$IMG_FILE"
 	fi
@@ -114,10 +124,14 @@ if [ "${DEPLOY_ZIP}" == "1" ]; then
 		"$(basename "${IMG_FILE}")"
 	popd > /dev/null
 else
-	if [ "${USE_LTSP}" == "1" ]; then
+	if [ "${EXPORT_LTSP_IMAGE}" = "1" ]; then
 		ltsp_img_pth="${LTSP_BASEDIR}/images/${LTSP_IMAGE}.img"
 		rm -f "${IMG_FILE}" && ln -s "$ltsp_img_pth" "$IMG_FILE"
 		rm -f "$DEPLOY_DIR/${LTSP_IMAGE}.img" && ln -s "$ltsp_img_pth" "$DEPLOY_DIR/${LTSP_IMAGE}.img"
+	elif [ "${EXPORT_CHROOT}" = "1" ]; then
+		chroot_pth="${CHROOT_BASEDIR}/${CHROOT_NAME}"
+		rm -f "${IMG_FILE}" && ln -s "$chroot_pth" "$IMG_FILE"
+		rm -f "$DEPLOY_DIR/${CHROOT_NAME}.chroot" && ln -s "$chroot_pth" "$DEPLOY_DIR/${CHROOT_NAME}.chroot"
 	else
 		mv "$IMG_FILE" "$DEPLOY_DIR/"
 	fi
